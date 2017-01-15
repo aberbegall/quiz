@@ -1,10 +1,4 @@
-import 'package:aqueduct/aqueduct.dart';
-import 'dart:async';
-
-void main() {
-  var app = new Application<QuizRequestSink>();
-  app.start();
-}
+import '../quiz.dart';
 
 class QuestionController extends HTTPController {
   var questions = [
@@ -22,16 +16,5 @@ class QuestionController extends HTTPController {
     }
 
     return new Response.ok(questions[index]);
-  }
-}
-
-class QuizRequestSink extends RequestSink {
-  QuizRequestSink(Map<String, dynamic> options) : super (options);
-
-  @override
-  void setupRouter(Router router) {
-    router
-        .route("/questions/[:index(\\d+)]")
-        .generate(() => new QuestionController());
   }
 }
