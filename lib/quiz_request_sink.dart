@@ -1,7 +1,13 @@
 import 'quiz.dart';
 
 class QuizRequestSink extends RequestSink {
-  QuizRequestSink(Map<String, dynamic> options) : super(options);
+  QuizRequestSink(Map<String, dynamic> options) : super(options) {
+    var dataModel = new ManagedDataModel([Question]);
+    var persistentStore = new PostgreSQLPersistentStore.fromConnectionInfo("dart", "dart", "localhost", 5432, "dart_test");
+    context = new ManagedContext(dataModel, persistentStore);
+  }
+
+  ManagedContext context;
 
   @override
   void setupRouter(Router router) {

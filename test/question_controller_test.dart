@@ -7,24 +7,63 @@ void main() {
 
   setUpAll(() async {
     await app.start(runOnMainIsolate: true);
+    var ctx = ManagedContext.defaultContext;
+
+    // setup temporary table based on current context data model
+    var builder = new SchemaBuilder.toSchema(ctx.persistentStore, new Schema.fromDataModel(ctx.dataModel), isTemporary: true);
+
+    for (var cmd in builder.commands) {
+      await ctx.persistentStore.execute(cmd);
+    }
+
+    var questions = [
+      "How much wood can a woodchuck chuck?",
+      "What's the tallest mountain in the world?"
+    ];
+
+    for (var question in questions) {
+      var insertQuery = new Query<Question>()
+        ..values.description = question;
+      await insertQuery.insert();
+    }
   });
 
   tearDownAll(() async {
+
+    // closes persistent connection and enables temporary tables to disappear.
+    await ManagedContext.defaultContext.persistentStore.close();
+
     await app.stop();
   });
 
   test("/questions returns list of questions", () async {
     var response = await client.request("/questions").get();
-    expect(response, hasResponse(200, everyElement(endsWith("?"))));
+    expect(response, hasResponse(200, everyElement({
+      "index" : greaterThan(0),
+      "description" : endsWith("?")
+    })));
+    expect(response.decodedBody, hasLength(greaterThan(0)));
   });
 
   test("/questions/index returns a single question", () async {
     var response = await client.request("/questions/1").get();
-    expect(response, hasResponse(200, endsWith("?")));
+    expect(response, hasResponse(200, {
+      "index" : greaterThanOrEqualTo(0),
+      "description" : endsWith("?")
+    }));
   });
 
   test("/questions/index out of range returns 404", () async {
     var response = await client.request("/questions/100").get();
     expect(response, hasStatus(404));
+  });
+
+  test("/questions returns list of questions filtered by contains", () async {
+    var response = await client.request("/questions?contains=mountain").get();
+    expect(response, hasResponse(200, [{
+      "index" : greaterThanOrEqualTo(0),
+      "description" : "What's the tallest mountain in the world?"
+    }]));
+    expect(response.decodedBody, hasLength(1));
   });
 }
