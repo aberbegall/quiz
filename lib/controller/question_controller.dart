@@ -7,7 +7,9 @@ class QuestionController extends HTTPController {
   ];
 
   @httpGet getAllQuestions({@HTTPQuery("contains") String containsSubstring: null}) async {
-    var questionQuery = new Query<Question>();
+    var questionQuery = new Query<Question>()
+      ..matchOn.answer.includeInResultSet = true;
+
     if (containsSubstring != null) {
       questionQuery.matchOn.description = whereContains(containsSubstring);
     }

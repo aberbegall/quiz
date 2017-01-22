@@ -20,10 +20,20 @@ void main() {
       "How much wood can a woodchuck chuck?",
       "What's the tallest mountain in the world?"
     ];
+    var answersIterator = [
+      "Depends on if they can",
+      "Mount Everest"
+    ].iterator;
 
     for (var question in questions) {
       var insertQuery = new Query<Question>()
         ..values.description = question;
+      question = await insertQuery.insert();
+
+      answersIterator.moveNext();
+      insertQuery = new Query<Answer>()
+        ..values.description = answersIterator.current
+        ..values.question = question;
       await insertQuery.insert();
     }
   });
@@ -40,7 +50,10 @@ void main() {
     var response = await client.request("/questions").get();
     expect(response, hasResponse(200, everyElement({
       "index" : greaterThan(0),
-      "description" : endsWith("?")
+      "description" : endsWith("?"),
+      "answer" : partial({
+        "description" : isString
+      })
     })));
     expect(response.decodedBody, hasLength(greaterThan(0)));
   });
@@ -62,7 +75,10 @@ void main() {
     var response = await client.request("/questions?contains=mountain").get();
     expect(response, hasResponse(200, [{
       "index" : greaterThanOrEqualTo(0),
-      "description" : "What's the tallest mountain in the world?"
+      "description" : "What's the tallest mountain in the world?",
+      "answer" : partial({
+        "description" : "Mount Everest"
+      })
     }]));
     expect(response.decodedBody, hasLength(1));
   });
