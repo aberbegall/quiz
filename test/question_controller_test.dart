@@ -2,7 +2,12 @@ import 'package:test/test.dart';
 import 'package:quiz/quiz.dart';
 
 void main() {
-  var app = new Application<QuizRequestSink>();
+  var config = new QuizConfiguration("config.yaml.src");
+  var app = new Application<QuizRequestSink>()
+    ..configuration.configurationOptions = {
+      QuizRequestSink.ConfigurationKey : config
+    };
+
   var client = new TestClient(app);
 
   setUpAll(() async {
